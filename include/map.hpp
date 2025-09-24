@@ -8,6 +8,7 @@
 #include <SDL2/SDL.h>
 
 #include "vector2.hpp"
+#include "colony.hpp"
 
 enum class TileType
 {
@@ -20,6 +21,7 @@ struct Tile
 {
     TileType type;
     SDL_Color color;
+    bool spawnable{true};
 };
 
 class Map
@@ -36,6 +38,8 @@ public:
     Map &operator=(Map &&) = delete;
 
     void generate_map(Vector2<int> size);
+    std::vector<Colony> spawn_colonies(int count);
+
     int get_tile_size();
 
     Tile get_tile(Vector2<int> pos);
@@ -43,6 +47,9 @@ public:
 private:
     Map() {}
     ~Map() {}
+
+    int LAYERS{1};
+    int NEURONS{1};
 
     Vector2<int> map_size;
     int tile_size{16};

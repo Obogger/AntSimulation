@@ -42,7 +42,9 @@ bool Simulation::initialize()
     srand(time(NULL));
 
     map_size = {100, 100};
+
     map.generate_map(map_size);
+    colonies = map.spawn_colonies(1);
 
     running = true;
     
@@ -73,6 +75,7 @@ void Simulation::run()
             SDL_Delay((target_time - frame_time) * 1000 / SDL_GetPerformanceFrequency());
         }
     }
+
 }
 
 void Simulation::handle_events()
@@ -139,12 +142,20 @@ void Simulation::handle_events()
         {
             if (event.wheel.y > 0)
             {
+                camera.pos.x -= (view_port.x / 2 - camera.pos.x) / camera.zoom;
+                camera.pos.y -= (view_port.y / 2 - camera.pos.y) / camera.zoom;
                 camera.zoom += 1;
             }
             else if (event.wheel.y < 0)
             {
                 camera.zoom -= 1;
-                if (camera.zoom < 1) camera.zoom = 1; // Prevent zoom from going below 1
+                if (camera.zoom < 1)
+                {
+                    camera.zoom = 1;
+                    continue;
+                }
+                camera.pos.x += (view_port.x / 2 - camera.pos.x) / (camera.zoom + 1);
+                camera.pos.y += (view_port.y / 2 - camera.pos.y) / (camera.zoom + 1);
             }
         }
     }
@@ -167,7 +178,15 @@ void Simulation::handle_events()
 
 void Simulation::update()
 {
-    // Update simulation state here
+    for(auto &colony : colonies) 
+    {   
+        colony.neural_network.take_action(delta_time, colony.queen);
+        for(auto &ant : colony.ants) 
+        {
+            colony.neural_network.take_action(delta_time, ant);
+        }
+
+    }
 }
 
 void Simulation::render()
@@ -189,18 +208,54 @@ void Simulation::render()
             SDL_Rect tile_rect = {rect_x, rect_y, camera.zoom * tile_size, camera.zoom * tile_size};
             SDL_Color color = map.get_tile(Vector2<int>(x,y)).color;
 
+
             SDL_SetRenderDrawColor(renderer, color.r, color.g, color.b, color.a);
             SDL_RenderFillRect(renderer, &tile_rect);
+        }
+
+        for(auto &colony : colonies) 
+        {
+            int tile_size = map.get_tile_size();
+
+            int colony_rect_x = colony.position.x * tile_size * camera.zoom + camera.pos.x;
+            int colony_rect_y = colony.position.y * tile_size * camera.zoom + camera.pos.y;
+
+            SDL_Rect colony_rect = {colony_rect_x, colony_rect_y, camera.zoom * tile_size, camera.zoom * tile_size};
+            SDL_Color color = {255, 0, 0, 255};
+            SDL_SetRenderDrawColor(renderer, color.r, color.g, color.b, color.a);
+            SDL_RenderFillRect(renderer, &colony_rect);
+                
+            for(auto &ant : colony.ants) 
+            {
+                int ant_rect_x = ant.position.x * tile_size * camera.zoom + camera.pos.x;
+                int ant_rect_y = ant.position.y * tile_size * camera.zoom + camera.pos.y;
+
+                SDL_Rect ant_rect = {ant_rect_x, ant_rect_y, camera.zoom * ant.size, camera.zoom * ant.size};
+                SDL_Color ant_color = ant.color;
+                SDL_SetRenderDrawColor(renderer, ant_color.r, ant_color.g, ant_color.b, ant_color.a);
+                SDL_RenderFillRect(renderer, &ant_rect);
+            }
+
+            int queen_rect_x = colony.queen.position.x * tile_size * camera.zoom + camera.pos.x;
+            int queen_rect_y = colony.queen.position.y * tile_size * camera.zoom + camera.pos.y;
+
+            SDL_Rect queen_rect = {queen_rect_x, queen_rect_y, camera.zoom * colony.queen.size, camera.zoom * colony.queen.size};
+            SDL_Color queen_color = colony.queen.color;
+            SDL_SetRenderDrawColor(renderer, queen_color.r, queen_color.g, queen_color.b, queen_color.a);
+            SDL_RenderFillRect(renderer, &queen_rect);  
         }
     }
 
     SDL_RenderPresent(renderer);
 }
 
-
 Simulation::~Simulation()
 {
-    TTF_CloseFont(font);
+    if (font)
+    {
+        TTF_CloseFont(font);
+        font = nullptr;
+    }
 
     if (renderer)
     {
@@ -214,7 +269,4 @@ Simulation::~Simulation()
         window = nullptr;
     }
 
-    TTF_Quit();
-    IMG_Quit();
-    SDL_Quit();
 }

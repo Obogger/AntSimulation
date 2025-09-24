@@ -39,6 +39,7 @@ private:
     SDL_Renderer *renderer;       // SDL renderer
     TTF_Font *font;
     Vector2<int> map_size;
+    std::vector<Colony> colonies;
 
     Map &map;
     Camera camera; 
