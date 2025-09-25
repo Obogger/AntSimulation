@@ -22,6 +22,7 @@ struct Tile
     TileType type;
     SDL_Color color;
     bool spawnable{true};
+    bool wall{true};
 };
 
 class Map
@@ -49,7 +50,7 @@ private:
     ~Map() {}
 
     int LAYERS{1};
-    int NEURONS{1};
+    int NEURONS{5};
 
     Vector2<int> map_size;
     int tile_size{16};

@@ -44,7 +44,7 @@ bool Simulation::initialize()
     map_size = {100, 100};
 
     map.generate_map(map_size);
-    colonies = map.spawn_colonies(1);
+    colonies = map.spawn_colonies(15);
 
     running = true;
     
@@ -69,7 +69,7 @@ void Simulation::run()
         render();
 
         Uint64 frame_time = SDL_GetPerformanceCounter() - time_now;
-        Uint64 target_time = SDL_GetPerformanceFrequency() / 144; // 60 FPS
+        Uint64 target_time = SDL_GetPerformanceFrequency() / 60; // 60 FPS
         if (frame_time < target_time)
         {
             SDL_Delay((target_time - frame_time) * 1000 / SDL_GetPerformanceFrequency());
@@ -181,11 +181,13 @@ void Simulation::update()
     for(auto &colony : colonies) 
     {   
         colony.neural_network.take_action(delta_time, colony.queen);
+        colony.queen.position += colony.queen.veocity * delta_time;
+
         for(auto &ant : colony.ants) 
         {
             colony.neural_network.take_action(delta_time, ant);
+            ant.position += ant.veocity * delta_time;
         }
-
     }
 }
 
@@ -208,7 +210,16 @@ void Simulation::render()
             SDL_Rect tile_rect = {rect_x, rect_y, camera.zoom * tile_size, camera.zoom * tile_size};
             SDL_Color color = map.get_tile(Vector2<int>(x,y)).color;
 
+            if(map.get_tile(Vector2<int>(x,y)).wall)
+            {
+                if(color.r < 50) color.r = 0;
+                else color.r -= 50;
+                if(color.g < 50) color.g = 0;
+                else color.g -= 50;
+                if(color.b < 50) color.b = 0;
+                else color.b -= 50;
 
+            }   
             SDL_SetRenderDrawColor(renderer, color.r, color.g, color.b, color.a);
             SDL_RenderFillRect(renderer, &tile_rect);
         }

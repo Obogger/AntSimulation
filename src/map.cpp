@@ -66,7 +66,8 @@ std::vector<Colony> Map::spawn_colonies(int count)
             for (int x = rand_x; x < colony_spawn_radius + rand_x; x++)
             {
                 Tile tile;
-                tile.type = TileType::EMPTY;
+                tile.type = TileType::DIRT;
+                tile.wall = false;
                 tile.color = get_color(tile.type);
                 tile.spawnable = false;
 

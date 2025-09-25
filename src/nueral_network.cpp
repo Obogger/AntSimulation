@@ -11,11 +11,11 @@ NeuralNetwork::NeuralNetwork(int _nuerons, int _layers) : neurons(_nuerons), lay
         Neuron neuron;
         for(int k = 0; k < INPUTS; ++k) 
         {
-            double weight = static_cast<double>(rand() % RANDOM_NEURON_WEIGHT_RANGE - RANDOM_NEURON_WEIGHT_OFFSET);
+            double weight = static_cast<double>(rand() % RANDOM_NEURON_WEIGHT_RANGE + RANDOM_NEURON_WEIGHT_OFFSET);
 
             neuron.weights.push_back(weight);
         }
-        double bias = static_cast<double>(rand() % RANDOM_NEURON_BIAS_RANGE - RANDOM_NEURON_BIAS_OFFSET);
+        double bias = static_cast<double>(rand() % RANDOM_NEURON_BIAS_RANGE + RANDOM_NEURON_BIAS_OFFSET);
         neuron.bias = bias;
         
         layer.push_back(neuron);
@@ -31,11 +31,11 @@ NeuralNetwork::NeuralNetwork(int _nuerons, int _layers) : neurons(_nuerons), lay
             Neuron neuron;
             for(int k = 0; k < neurons; ++k) 
             {
-                double weight = static_cast<double>(rand() % RANDOM_NEURON_WEIGHT_RANGE - RANDOM_NEURON_WEIGHT_OFFSET);
+                double weight = static_cast<double>(rand() % RANDOM_NEURON_WEIGHT_RANGE + RANDOM_NEURON_WEIGHT_OFFSET);
 
                 neuron.weights.push_back(weight);
             }
-            double bias = static_cast<double>(rand() % RANDOM_NEURON_BIAS_RANGE - RANDOM_NEURON_BIAS_OFFSET);
+            double bias = static_cast<double>(rand() % RANDOM_NEURON_BIAS_RANGE + RANDOM_NEURON_BIAS_OFFSET);
             neuron.bias = bias;
             
             layer.push_back(neuron);
@@ -51,11 +51,11 @@ NeuralNetwork::NeuralNetwork(int _nuerons, int _layers) : neurons(_nuerons), lay
         Neuron output_neuron;
         for(int j = 0; j < neurons; j++) 
         {
-            double weight = static_cast<double>(rand() % RANDOM_NEURON_WEIGHT_RANGE - RANDOM_NEURON_WEIGHT_OFFSET);
+            double weight = static_cast<double>(rand() % RANDOM_NEURON_WEIGHT_RANGE + RANDOM_NEURON_WEIGHT_OFFSET);
 
             output_neuron.weights.push_back(weight);
         }
-        double bias = static_cast<double>(rand() % RANDOM_NEURON_BIAS_RANGE - RANDOM_NEURON_BIAS_OFFSET);
+        double bias = static_cast<double>(rand() % RANDOM_NEURON_BIAS_RANGE + RANDOM_NEURON_BIAS_OFFSET);
         output_neuron.bias = bias;
 
         output_layer.push_back(output_neuron);
@@ -70,7 +70,7 @@ void NeuralNetwork::take_action(double dt, Ant &ant)
 
     for(int i = 0; i < INPUTS; i++)
     {
-        inputs.push_back(static_cast<double>(ant.position.x));
+        inputs.push_back(0.0);
     }
 
     for(int j = 0; j < layers; j++)
@@ -96,7 +96,10 @@ void NeuralNetwork::take_action(double dt, Ant &ant)
         switch (i)
         {
         case 0:
-            move(dt, output, ant);
+            move(output, ant);
+            break;
+        case 1:
+            rotate_ant(ant, output, dt);
             break;
         
         default:
@@ -106,9 +109,19 @@ void NeuralNetwork::take_action(double dt, Ant &ant)
     }
 }
 
-void NeuralNetwork::move(double dt, double output, Ant &ant)
+void NeuralNetwork::move(double output, Ant &ant)
 {
-    ant.position.x += (output * ant.speed * dt);
+
+    double radians = ant.rotation * M_PI / 180.0;
+
+    ant.veocity.x = std::cos(radians) * (output * ant.speed);
+    ant.veocity.y = std::sin(radians) * (output * ant.speed);
+}
+
+void NeuralNetwork::rotate_ant(Ant &ant, double value, double dt)
+{
+    ant.rotation += value * ant.rotation_speed * dt;
+    
 }
 
 void NeuralNetwork::calculate_neuron_output(const std::vector<double>& inputs, Neuron &neuron)

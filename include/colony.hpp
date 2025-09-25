@@ -17,8 +17,11 @@ public:
 
     Vector2<double> position;
     int size{10};
-    double veocity{1.0};
+    Vector2<double> veocity = {0.0, 0.0};
     double speed{10.0};
+
+    double rotation_speed{90.0};
+    double rotation{0.0};
 
     SDL_Color color{0, 0, 0, 255};
     
